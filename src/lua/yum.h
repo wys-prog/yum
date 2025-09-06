@@ -3,6 +3,10 @@
 
 #include <stdint.h>
 
+#define YUM_UID_NULL ((Yumuid)(0x00))
+#define YUM_LIBS_YES ((uint8_t)(1))
+#define YUM_LIBS_NOO ((uint8_t)(0))
+
 typedef uint64_t Yumuid;
 
 typedef struct {
@@ -14,13 +18,13 @@ typedef struct {
 extern "C" {
 #endif
 
-YumErr        Yum_InitSubsystem();
+YumErr        Yum_InitSubsystem(const char *homedir);
 YumErr        Yum_NewWorld();
 YumErr        Yum_RunCode(Yumuid world, Yumuid src);
-YumErr        Yum_Compile(const char *src);
-YumErr        Yum_CompileString(const char *str);
-YumErr        Yum_Run();
-YumErr        Yum_LoadLibs(Yumuid libid);
+YumErr        Yum_Compile(const char *src, uint8_t libs);
+YumErr        Yum_CompileString(const char *str, uint8_t libs);
+YumErr        Yum_RunFast(Yumuid uid);
+//YumErr        Yum_LoadLibs(Yumuid libid);
 void          Yum_DestroyWorld(Yumuid world);
 const char   *Yum_GetError(YumErr e);
 void          Yum_Shutdown();
