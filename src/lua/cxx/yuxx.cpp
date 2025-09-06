@@ -1,4 +1,5 @@
 #include <stack>
+#include <format>
 #include <vector>
 #include <string>
 #include <variant>
@@ -11,6 +12,7 @@
 #include <lua.hpp>
 
 #include "yuxx.h"
+#include "../yumv.h"
 
 namespace Yum {
   static int luaPrint(lua_State* L) {
@@ -147,6 +149,12 @@ static Yum::Yum_cxx::YumLua *G_YumIstance;
 
 extern "C" {
   int32_t YcxxYum_initSubsystem() {
+    std::cout << 
+      std::format("YumEngine.{}.{}.{}.{}.{} - Lua.Runtime.{}.{}", 
+        YUM_STUDIO, YUM_BRANCH, YUM_VERSION_MAJOR, YUM_VERSION_MINOR, YUM_VERSION_PATCH, 
+        LUA_VERSION_MAJOR, LUA_VERSION_MINOR
+      ) << std::endl;
+    
     G_YumIstance = new Yum::Yum_cxx::YumLua();
     if (!G_YumIstance) return -1;
     return G_YumIstance->initSubsystem();

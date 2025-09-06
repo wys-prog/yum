@@ -7,12 +7,6 @@ public partial class MainCaca : Control
   {
     Yum.Yum_initSubsystem();
 
-    Yum.Yum_loadString("function badbro(str) print('hello from Lua guys') end");
-    Yum.Yum_pushString("haha");
-    Yum.Yum_call("badbro");
-    Yum.Yum_call("badbro");
-    Yum.Yum_call("badbro");
-    Yum.Yum_loadString("print('hello', 123, true)");
-    GD.Print("(from Godot.C#) end of ready");
+    Yum.Yum_loadString("print('Mommy i luv u <3')");
   }
 }
