@@ -2,45 +2,22 @@
 #include <format>
 #include <vector>
 #include <string>
-#include <variant>
-#include <cstdint>
+#include <memory>
 #include <chrono>
+#include <cstdint>
+#include <variant>
 #include <iomanip>
 #include <sstream>
 #include <iostream>
+#include <unordered_map>
 
 #include <lua.hpp>
 
 #include "yuxx.h"
+#include "yclbxx.hpp"
 #include "../yumv.h"
 
 namespace Yum {
-  static int luaPrint(lua_State* L) {
-    int n = lua_gettop(L);
-
-    for (int i = 1; i <= n; i++) {
-      if (lua_isstring(L, i)) {
-        std::cout << lua_tostring(L, i);
-      } else if (lua_isnumber(L, i)) {
-        std::cout << lua_tonumber(L, i);
-      } else if (lua_isboolean(L, i)) {
-        std::cout << (lua_toboolean(L, i) ? "true" : "false");
-      } else {
-        std::cout << luaL_typename(L, i);
-      }
-      if (i < n) std::cout << "\t";
-    }
-
-    std::cout << std::endl;
-
-    return 0;
-  }
-
-  void registerPrint(lua_State* L) {
-    lua_pushcfunction(L, luaPrint);
-    lua_setglobal(L, "print");
-  }
-
   namespace Yum_cxx {
     class YumLua {
     private:
@@ -68,6 +45,8 @@ namespace Yum {
       bool        cleaned = false;
       std::stack<std::string> errorStack;
       std::vector<std::variant<int64_t, double, bool, std::string>> argvVec;
+      std::unordered_map<std::string, std::shared_ptr<Y_lua2cxx::lua2cxx_func>> registeredCallbacks;
+      std::unordered_map<std::string, std::shared_ptr<YumCSharpFunc>> CSCallbacks;
 
       void pushStack(int64_t i) { lua_pushinteger(G_State, i); }
       void pushStack(double d) { lua_pushnumber(G_State, d); }
@@ -78,7 +57,7 @@ namespace Yum {
       YumLua() : G_State(nullptr), cleaned(false), errorStack() {}
       ~YumLua() {
         if (!cleaned) {
-          errorStack.push(makeError("destroying uncleaned object! --resrouces may leaked", __func__));
+          errorStack.push(makeError("(WARN) destroying uncleaned object! --resrouces may leaked", __func__));
           if (G_State) lua_close(G_State);
         }
 
@@ -99,7 +78,6 @@ namespace Yum {
         }
 
         luaL_openlibs(G_State);
-        registerPrint(G_State);
 
         return 0;
       }
@@ -141,6 +119,135 @@ namespace Yum {
 
         return 0;
       }
+
+      void registerFunction(const std::shared_ptr<Y_lua2cxx::lua2cxx_func> &func) {
+        if (!G_State) {
+          errorStack.push(makeError("registerFunction() called before initSubsystem()!", __func__));
+          return;
+        }
+
+        registeredCallbacks[func->name()] = func;
+
+        lua_pushlightuserdata(G_State, func.get());
+        try {
+          lua_pushcclosure(G_State, [](lua_State *L) -> int {
+            auto* f = (Y_lua2cxx::lua2cxx_func*)lua_touserdata(L, lua_upvalueindex(1));
+            return f->interface(L);
+          }, 1);
+
+          lua_setglobal(G_State, func->name().c_str());
+        } catch (const std::exception &e) {
+          /* Since it's a C-driven API, and that Y_lua2cxx::lua2cxx_func can throw, we must handle exceptions. */
+          errorStack.push(makeError(std::string("caught exception: ") + e.what(), __func__));
+        }
+        /* That region is really unsafe (I guess!). I putted the setglobal() in the try block, 
+         ** so in the case an exception is thrown, Lua won't register the function.
+         ** But still, we need to be careful, 'caus we can still endup with 'attempt to call nil value' in Lua.
+         ** Generally it won't cause any problem. But we need to keep careful. 
+         */
+      }
+
+      int32_t registerCSCallback(const std::string &name, const std::shared_ptr<YumCSharpFunc> &func) {
+        if (!G_State) {
+          errorStack.push(makeError(std::string(__func__) + "() called before initSubsystem()!", __func__));
+          return -1;
+        }
+
+        // keep ownership in map
+        CSCallbacks[name] = func;
+
+        // push pointer to the stored YumCSharpFunc (raw pointer from shared_ptr)
+        lua_pushlightuserdata(G_State, func.get());
+
+        try {
+          // create a Lua C closure that will call the C# callback when invoked from Lua
+          lua_pushcclosure(G_State, [](lua_State *L) -> int {
+            // retrieve the YumCSharpFunc pointer we stored as upvalue
+            auto* fptr = (YumCSharpFunc*)lua_touserdata(L, lua_upvalueindex(1));
+            if (!fptr) {
+              lua_pushstring(L, "Yum: invalid C# callback pointer");
+              lua_error(L);
+              return 0; // unreachable, lua_error long-jumps
+            }
+
+            // build args vector from Lua stack
+            int nargs = lua_gettop(L);
+            std::vector<YcxxVariantBase> args;
+            args.reserve(nargs);
+
+            for (int i = 1; i <= nargs; ++i) {
+              int t = lua_type(L, i);
+              switch (t) {
+                case LUA_TNUMBER:
+                  if (lua_isinteger(L, i)) {
+                    args.emplace_back((int64_t)lua_tointeger(L, i));
+                  } else {
+                    args.emplace_back((double)lua_tonumber(L, i));
+                  }
+                  break;
+                case LUA_TBOOLEAN:
+                  args.emplace_back((bool)lua_toboolean(L, i));
+                  break;
+                case LUA_TSTRING:
+                  args.emplace_back(std::string(lua_tostring(L, i)));
+                  break;
+                default:
+                  // unsupported type -> push nil and return with an error message
+                  lua_pushnil(L);
+                  lua_pushfstring(L, "Yum: unsupported arg type for index %d", i);
+                  return 2;
+              }
+            }
+
+            // call the C# function (wrapped in YumCSharpFunc)
+            try {
+              auto Vargs = cxxVecVariant2CVecVariant(args);
+              auto result = (*fptr)(Vargs);
+              YcxxYum_deleteVec(Vargs); /* BAD CODE — imma try to make it proper! */
+
+              // push result onto Lua stack according to its held type
+              std::visit([L](auto&& value){
+                using T = std::decay_t<decltype(value)>;
+                if constexpr (std::is_same_v<T, int64_t>) {
+                  lua_pushinteger(L, value);
+                } else if constexpr (std::is_same_v<T, double>) {
+                  lua_pushnumber(L, value);
+                } else if constexpr (std::is_same_v<T, bool>) {
+                  lua_pushboolean(L, value);
+                } else if constexpr (std::is_same_v<T, std::string>) {
+                  lua_pushstring(L, value.c_str());
+                } else {
+                  lua_pushnil(L);
+                }
+              }, CVariant2CxxVariant(result));
+
+              return 1; // one return value
+            } catch (const std::exception &e) {
+              lua_pushnil(L);
+              lua_pushfstring(L, "Yum: exception from C# callback: %s", e.what());
+              return 2;
+            }
+          }, 1);
+
+          // register the closure as a global with the given name
+          lua_setglobal(G_State, name.c_str());
+        } catch (const std::exception &e) {
+          errorStack.push(makeError(std::string("caught exception: ") + e.what(), __func__));
+          return -1;
+        }
+
+        return 0;
+      }
+
+
+      void cleanUp() {
+//        if (G_State) {
+//          delete G_State;
+//          G_State = nullptr;
+//        }
+
+//        cleaned = true;
+      }
     };
   } 
 }
@@ -162,6 +269,7 @@ extern "C" {
 
   void YcxxYum_shutdownSubsystem() {
     if (G_YumIstance) {
+      G_YumIstance->cleanUp();
       delete G_YumIstance;
       G_YumIstance = nullptr;
     }
@@ -181,11 +289,11 @@ extern "C" {
 
   void YcxxYum_pushString(const char *a) {
     if (G_YumIstance) {
-      G_YumIstance->pushArgv(a);
+      G_YumIstance->pushArgv(std::string(a));
     }
   }
 
-  void YcxxYum_pushBoolean(int16_t a) {
+  void YcxxYum_pushBoolean(int a) {
     if (G_YumIstance) {
       G_YumIstance->pushArgv((bool)a);
     }
@@ -207,5 +315,17 @@ extern "C" {
     if (G_YumIstance) {
       return G_YumIstance->call(name);
     } return -1;
+  }
+
+  int32_t YcxxYum_registerCSCallback(const char *name, YumCSharpFunc func) {
+    if (!G_YumIstance) return -1;
+    if (!name || !func) return -1;
+
+    auto sp = std::make_shared<YumCSharpFunc>(func);
+    
+    std::cout << "[Yum.Debug] Copied and registered C# callback: " << name 
+              << " at " << sp.get() << std::endl;
+
+    return G_YumIstance->registerCSCallback(std::string(name), sp);
   }
 }

@@ -9,12 +9,29 @@ local CXX = "g++-15"                       -- C++ compiler
 local CC  = "gcc-15"                       -- C compiler
 local LUA_INC = "/opt/homebrew/include/lua5.4"
 local LUA_LIB = "/opt/homebrew/lib"
-local SRC_CXX = "src/lua/cxx/yuxx.cpp"
-local SRC_C = "src/lua/yum.c"
 local BUILD_DIR = "tests/bin"
 local OUT_LIB = BUILD_DIR .. "/../yum.dylib"
 local CHECK_CMD = "otool -L"
 local version_file = "src/lua/yumv.h"
+
+-- === SOURCES ===
+local SRC_CXX = {
+    "src/lua/cxx/yuxx.cpp",
+    "src/lua/cxx/variant.cpp",
+    "src/lua/cxx/vec.cpp",
+}
+local SRC_C = {
+    "src/lua/yum.c",
+}
+
+-- === INCLUDES / LIBS ===
+local INCLUDES = {
+    LUA_INC,
+    "src/lua/cxx",
+}
+local LIBS = {
+    "-llua", "-lm", "-ldl"
+}
 
 -- ========================
 -- HELPERS
@@ -100,25 +117,23 @@ local function run(cmd)
     local result = handle:read("*a")
     local success, _, code = handle:close()
     if code ~= 0 then
-        error("Command failed with code " .. code)
+        error("Command failed with code " .. code .. "\nOutput:\n" .. result)
     end
 end
 
--- parse args
-local function parse_args()
-    local kind = "patch"
-    for _, a in ipairs(arg) do
-        if a == "-major" then kind = "major"
-        elseif a == "-minor" then kind = "minor"
-        elseif a:match("^%-studio:") then studio_name = a:sub(9)
-        elseif a:match("^%-branch:") then branch_name = a:sub(9)
-        elseif a:match("^%-cxx:") then CXX = a:sub(6)
-        elseif a:match("^%-cc:") then CC = a:sub(5)
-        elseif a:match("^%-lua_inc:") then LUA_INC = a:sub(10)
-        elseif a:match("^%-lua_lib:") then LUA_LIB = a:sub(10)
-        end
+-- join helpers
+local function join(tbl, sep)
+    local buf = {}
+    for _, v in ipairs(tbl) do table.insert(buf, v) end
+    return table.concat(buf, sep)
+end
+
+local function make_includes()
+    local buf = {}
+    for _, inc in ipairs(INCLUDES) do
+        table.insert(buf, '-I"' .. inc .. '"')
     end
-    return kind
+    return table.concat(buf, " ")
 end
 
 -- ========================
@@ -143,18 +158,41 @@ local function main()
     os.execute("mkdir -p " .. BUILD_DIR)
 
     print("[4/6] Building libyumcxx.a...")
-    run(string.format('%s -std=c++20 -I"%s" -Wall -Wextra -fPIC -shared -c "%s" -o "%s/yuxx.o"',
-        CXX, LUA_INC, SRC_CXX, BUILD_DIR))
-    run(string.format('ar rcs "%s/libyumcxx.a" "%s/yuxx.o"', BUILD_DIR, BUILD_DIR))
+    local objs = {}
+    for _, src in ipairs(SRC_CXX) do
+        local obj = BUILD_DIR .. "/" .. src:match("([^/]+)%.cpp") .. ".o"
+        run(string.format('%s -std=c++20 %s  -fdiagnostics-color=always -Wall -Wextra -fPIC -shared -c "%s" -o "%s"',
+            CXX, make_includes(), src, obj))
+        table.insert(objs, obj)
+    end
+    run(string.format('ar rcs "%s/libyumcxx.a" %s', BUILD_DIR, table.concat(objs, " ")))
 
     print("[5/6] Linking libyum.dylib...")
-    run(string.format('%s -dynamiclib -o "%s" "%s" "%s/libyumcxx.a" -I"%s" -L"%s" -shared -llua -lm -ldl -Wall -Wextra -DYUM_BUILD_DLL -fPIC',
-        CXX, OUT_LIB, SRC_C, BUILD_DIR, LUA_INC, LUA_LIB))
+    local libs = join(LIBS, " ")
+    run(string.format('%s -dynamiclib -o "%s" %s "%s/libyumcxx.a" %s -L"%s"  -fdiagnostics-color=always -shared -Wall -Wextra -DYUM_BUILD_DLL -fPIC',
+        CXX, OUT_LIB, table.concat(SRC_C, " "), BUILD_DIR, make_includes(), LUA_LIB) .. " " .. libs)
 
     print("[6/6] Verifying...")
     run(CHECK_CMD .. " " .. OUT_LIB)
 
     print("Build complete: " .. OUT_LIB)
+end
+
+-- parse args (moved down so it can see globals)
+function parse_args()
+    local kind = "patch"
+    for _, a in ipairs(arg) do
+        if a == "-major" then kind = "major"
+        elseif a == "-minor" then kind = "minor"
+        elseif a:match("^%-studio:") then studio_name = a:sub(9)
+        elseif a:match("^%-branch:") then branch_name = a:sub(9)
+        elseif a:match("^%-cxx:") then CXX = a:sub(6)
+        elseif a:match("^%-cc:") then CC = a:sub(5)
+        elseif a:match("^%-lua_inc:") then LUA_INC = a:sub(10)
+        elseif a:match("^%-lua_lib:") then LUA_LIB = a:sub(10)
+        end
+    end
+    return kind
 end
 
 main()
