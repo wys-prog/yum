@@ -321,11 +321,18 @@ extern "C" {
     if (!G_YumIstance) return -1;
     if (!name || !func) return -1;
 
-    auto sp = std::make_shared<YumCSharpFunc>(func);
-    
-    std::cout << "[Yum.Debug] Copied and registered C# callback: " << name 
+    auto sp = std::shared_ptr<YumCSharpFunc>(
+      new YumCSharpFunc(func),
+      [](YumCSharpFunc* p) {
+        std::cout << "yum: [Yum.Debug] Destroying C# callback at " << p << std::endl;
+        delete p;
+      }
+    );
+
+    std::cout << "yum: [Yum.Debug] Copied and registered C# callback: " << name 
               << " at " << sp.get() << std::endl;
 
     return G_YumIstance->registerCSCallback(std::string(name), sp);
   }
+
 }

@@ -19,13 +19,18 @@ public partial class MainCaca : Control
 
     string code = $"""
     function friendof()
-      print('oki')
+      print('oki ' .. 'haha')
     end
 
     function main(arg1)
       print(arg1)
       print('btw i got smth from C#, look: {"haha"}')
       friendof()
+    end
+
+    function yang(a, b, c, d)
+      print(a, b, c, d)
+      print('wtf is ', a, '????')
     end
     """;
 
@@ -47,6 +52,7 @@ public partial class MainCaca : Control
       return result.Handle;
     });
     YumSystem.Call("foo");
+    YumSystem.Call("yang", 90987, 9.876, "hahahah", false);
   }
 
   public override void _ExitTree()

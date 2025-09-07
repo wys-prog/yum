@@ -75,6 +75,28 @@ namespace Yum
         public static int LoadString(string code) => Native.Yum_loadString(code);
         public static int LoadFile(string path) => Native.Yum_loadFile(path);
         public static int Call(string func) => Native.Yum_call(func);
+        public static int Call(string func, params object[] args)
+        {
+            foreach (var arg in args)
+            {
+                switch (arg)
+                {
+                    case int i: Push((long)i); break;
+                    case long l: Push(l); break;
+                    case double d: Push(d); break;
+                    case float f: Push((double)f); break;
+                    case bool b: Push(b); break;
+                    case string s: Push(s); break;
+                    case null: Push("null"); break; // fallback if Lua doesn’t support nil easily
+                    default:
+                        throw new ArgumentException(
+                            $"Unsupported argument type {arg.GetType().Name} for Lua call");
+                }
+            }
+
+            return Native.Yum_call(func);
+        }
+
         public static int RegisterCallback(string name, YumCSharpFunc func) => Native.Yum_registerCSCallback(name, func);
     }
 
