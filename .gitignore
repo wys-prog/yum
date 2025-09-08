@@ -1,3 +1,4 @@
 .wys/
 *.DS_Store
 .vscode/
+build/

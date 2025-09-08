@@ -2,6 +2,7 @@
 #define __YUM_CXX_VARIANT_VECTOR_H__
 
 #include <stdint.h>
+#include "../yumexport.h"
 
 typedef struct YcxxYum_Vec YcxxYum_Vec;
 
@@ -13,20 +14,20 @@ extern "C"
 {
 #endif // __cplusplus
 
-  YcxxYum_Vec *YcxxYum_newVec();
-  void YcxxYum_deleteVec(YcxxYum_Vec *v);
-  void YcxxYum_pushIntVec(int64_t a, YcxxYum_Vec *v);
-  void YcxxYum_pushNumberVec(double a, YcxxYum_Vec *v);
-  void YcxxYum_pushBooleanVec(int a, YcxxYum_Vec *v);
-  void YcxxYum_pushStringVec(const char *a, YcxxYum_Vec *v);
-  int64_t YcxxYum_sizeVec(YcxxYum_Vec *v);
-  const char *YcxxYum_typeAtVec(YcxxYum_Vec *v, int64_t idx);
-  int64_t YcxxYum_intAtVec(YcxxYum_Vec *v, int64_t idx);
-  double YcxxYum_numberAtVec(YcxxYum_Vec *v, int64_t idx);
-  int YcxxYum_booleanAtVec(YcxxYum_Vec *v, int64_t idx);
-  const char *YcxxYum_stringAtVec(YcxxYum_Vec *v, int64_t idx);
-  void YcxxYum_clearVec(YcxxYum_Vec *v);
-  void YcxxYum_popBackVec(YcxxYum_Vec *v);
+  YUM_API YcxxYum_Vec *YcxxYum_newVec();
+  YUM_API void YcxxYum_deleteVec(YcxxYum_Vec *v);
+  YUM_API void YcxxYum_pushIntVec(int64_t a, YcxxYum_Vec *v);
+  YUM_API void YcxxYum_pushNumberVec(double a, YcxxYum_Vec *v);
+  YUM_API void YcxxYum_pushBooleanVec(int a, YcxxYum_Vec *v);
+  YUM_API void YcxxYum_pushStringVec(const char *a, YcxxYum_Vec *v);
+  YUM_API int64_t YcxxYum_sizeVec(YcxxYum_Vec *v);
+  YUM_API const char *YcxxYum_typeAtVec(YcxxYum_Vec *v, int64_t idx);
+  YUM_API int64_t YcxxYum_intAtVec(YcxxYum_Vec *v, int64_t idx);
+  YUM_API double YcxxYum_numberAtVec(YcxxYum_Vec *v, int64_t idx);
+  YUM_API int YcxxYum_booleanAtVec(YcxxYum_Vec *v, int64_t idx);
+  YUM_API const char *YcxxYum_stringAtVec(YcxxYum_Vec *v, int64_t idx);
+  YUM_API void YcxxYum_clearVec(YcxxYum_Vec *v);
+  YUM_API void YcxxYum_popBackVec(YcxxYum_Vec *v);
 
 #ifdef __cplusplus
 } /* extern "C" */

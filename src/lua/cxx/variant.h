@@ -3,6 +3,7 @@
 
 typedef struct Variant Variant;
 #include <stdint.h>
+#include "../yumexport.h"
 
 #ifdef __cplusplus
 #include <string>
@@ -23,17 +24,17 @@ struct Variant {
 extern "C" {
 #endif // __cplusplus
 
-  Variant *YcxxYum_newVariant();
-  void YcxxYum_deleteVariant(Variant *v);
-  void YcxxYum_setInt(Variant *v, int64_t i);
-  void YcxxYum_setNumber(Variant *v, double d);
-  void YcxxYum_setBool(Variant *v, int b);
-  void YcxxYum_setString(Variant *v, const char *s);
-  const char *YcxxYum_typeOf(Variant *v);
-  int64_t YcxxYum_asInt(Variant *v);
-  double YcxxYum_asNumber(Variant *v);
-  int YcxxYum_asBool(Variant *v);
-  const char *YcxxYum_asString(Variant *v);
+  YUM_API Variant *YcxxYum_newVariant();
+  YUM_API void YcxxYum_deleteVariant(Variant *v);
+  YUM_API void YcxxYum_setInt(Variant *v, int64_t i);
+  YUM_API void YcxxYum_setNumber(Variant *v, double d);
+  YUM_API void YcxxYum_setBool(Variant *v, int b);
+  YUM_API void YcxxYum_setString(Variant *v, const char *s);
+  YUM_API const char *YcxxYum_typeOf(Variant *v);
+  YUM_API int64_t YcxxYum_asInt(Variant *v);
+  YUM_API double YcxxYum_asNumber(Variant *v);
+  YUM_API int YcxxYum_asBool(Variant *v);
+  YUM_API const char *YcxxYum_asString(Variant *v);
 
 #ifdef __cplusplus
 }
