@@ -21,6 +21,12 @@ local function copy_file(src, dst)
   os.execute(string.format("cp -r %q %q", src, dst))
 end
 
+local function split_version(ver)
+  local major, minor, patch = ver:match("(%d+)%.(%d+)%.(%d+)")
+  return tonumber(major) or 0, tonumber(minor) or 0, tonumber(patch) or 0
+end
+
+
 local function bump_version(ver, level)
   local parts = split(ver, ".")
   local major, minor, patch = tonumber(parts[1]) or 0, tonumber(parts[2]) or 0, tonumber(parts[3]) or 0
@@ -103,22 +109,22 @@ if cmd == "-new" then
     settings.branch, settings.studio, settings.version,
     "{" ..
     table.concat(
-    (function()
-      local t = {}
-      for _, v in ipairs(cps) do table.insert(t, string.format("{%q,%q}", v[1], v[2])) end
-      return t
-    end)(), ",") .. "}",
+      (function()
+        local t = {}
+        for _, v in ipairs(cps) do table.insert(t, string.format("{%q,%q}", v[1], v[2])) end
+        return t
+      end)(), ",") .. "}",
     "{" ..
     table.concat(
-    (function()
-      local t = {}
-      for _, v in ipairs(bcs) do table.insert(t, string.format("%q", v)) end
-      return t
-    end)(), ",") .. "}")
+      (function()
+        local t = {}
+        for _, v in ipairs(bcs) do table.insert(t, string.format("%q", v)) end
+        return t
+      end)(), ",") .. "}")
   write_file(bottle_name .. "/settings.lua", sdata)
 
   for _, cp in ipairs(cps) do
-    copy_file(cp[1], bottle_name .. "/local/" .. cp[2])
+    copy_file(cp[1], bottle_name .. "/" .. cp[2])
   end
 
   print("Bottle " .. bottle_name .. " created.")
@@ -135,30 +141,31 @@ elseif cmd == "-run" then
   end
 
   settings.version = bump_version(settings.version)
+  local major, minor, patch = split_version(settings.version)
 
   local sdata = "return { branch=" ..
-  string.format("%q", settings.branch) ..
-  ", studio=" ..
-  string.format("%q", settings.studio) ..
-  ", version=" ..
-  string.format("%q", settings.version) ..
-  ", copies={" ..
-  table.concat(
-  (function()
-    local t = {}
-    for _, v in ipairs(settings.copies) do table.insert(t, string.format("{%q,%q}", v[1], v[2])) end
-    return t
-  end)(), ",") ..
-  "}, builds={" ..
-  table.concat(
-  (function()
-    local t = {}
-    for _, v in ipairs(settings.builds) do table.insert(t, string.format("%q", v)) end
-    return t
-  end)(), ",") .. "} }"
+      string.format("%q", settings.branch) ..
+      ", studio=" ..
+      string.format("%q", settings.studio) ..
+      ", version=" ..
+      string.format("%q", settings.version) ..
+      ", copies={" ..
+      table.concat(
+        (function()
+          local t = {}
+          for _, v in ipairs(settings.copies) do table.insert(t, string.format("{%q,%q}", v[1], v[2])) end
+          return t
+        end)(), ",") ..
+      "}, builds={" ..
+      table.concat(
+        (function()
+          local t = {}
+          for _, v in ipairs(settings.builds) do table.insert(t, string.format("%q", v)) end
+          return t
+        end)(), ",") .. "} }"
   write_file(bottle_name .. "/settings.lua", sdata)
 
-  local bottle_path = bottle_name .. "/"
+  local bottle_path = bottle_name
 
   for _, cmd in ipairs(settings.builds) do
     local replaced = cmd
@@ -166,8 +173,12 @@ elseif cmd == "-run" then
     replaced = replaced:gsub("%$YUM_BOTTLE_STUDIO", settings.studio)
     replaced = replaced:gsub("%$YUM_BOTTLE_VERSION", settings.version)
 
+    replaced = replaced:gsub("%$YUM_BOTTLE_MAJOR", tostring(major))
+    replaced = replaced:gsub("%$YUM_BOTTLE_MINOR", tostring(minor))
+    replaced = replaced:gsub("%$YUM_BOTTLE_PATCH", tostring(patch))
+
     -- prefix 'local/' paths automatically --
-    replaced = replaced:gsub("local/", bottle_path .. "local/")
+    replaced = replaced:gsub("%$YUM_BOTTLE_PATH", bottle_path)
 
     print("[BUILD] executing: " .. replaced)
     os.execute(replaced)
@@ -180,7 +191,8 @@ elseif cmd == "-update" then
     os.exit(1)
   end
   for _, cp in ipairs(settings.copies) do
-    copy_file(cp[1], bottle_name .. "/local/" .. cp[2])
+    copy_file(cp[1], bottle_name .. "/" .. cp[2])
+    print(cp[1], bottle_name .. "/" .. cp[2])
   end
   print("Bottle " .. bottle_name .. " updated.")
   if args[3] == "-major" then
