@@ -1,49 +1,43 @@
+<!-- download.html -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yum - Download</title>
-<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="../assets/style/yum.css">
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>YumEngine Downloads</title>
+  <link rel="stylesheet" href="../assets/style/yum.css">
 </head>
 <body>
 
 <header>
-  <h1>YUM</h1>
-  <p>Let's be lazy — but let's success too</p>
-  <nav>
-    <a href="../../index.html" class="btn">Home</a>
-    <a href="download.html" class="btn active">Download</a>
-    <a href="https://github.com/wys-prog/yum" class="btn" target="_blank">GitHub</a>
-  </nav>
+  <h1>YumEngine Downloads</h1>
+  <p>Get the latest build of YumEngine for your platform</p>
 </header>
 
-<section id="download">
-  <h2>Download Yum</h2>
-  <p>Yum is not released yet, but you can follow the project and get the latest updates on GitHub!</p>
-  <a href="https://github.com/wys-prog/yum" class="btn" target="_blank">View on GitHub</a>
+<section id="downloads">
+  <h2>Downloads</h2>
+  <p>Get the latest official builds:</p>
+  <p>Current Engine Version: <span id="engine-version">Loading...</span></p>
+  <h4>Important! We're planning releases as soon as possible. Internal engine is still in development.</h4>
 
-  <div style="margin-top:2em;">
-    <h3>Prebuilt Binaries:</h3>
-    <ul>
-      <li>
-        <a href="../bin/yum.dylib" download class="btn">Download yum.dylib (arm64 macOS)</a>
-      </li>
-      <li>
-        <a href="../bin/yum.dll" download class="btn">Download yum.dll (x64 Windows)</a>
-      </li>
-      <li>
-        <a href="https://github.com/wys-prog/yum" class="btn" target="_blank">View on GitHub</a>
-      </li>
-    </ul>
-    <p style="color:#aaa; margin-top:1em;">Stay tuned for future releases and additional binaries!</p>
+  <div class="downloads-container">
+    <div class="download-card">
+      <img src="../assets/icons/github-mark.png" alt="GitHub">
+      <h3>GitHub</h3>
+      <p>Source code</p>
+      <a href="https://github.com/wys-prog/yum" class="btn">Go!</a>
+    </div>
   </div>
 </section>
 
+<script src="../assets/version/engine_version.js"></script>
+<script>
+  document.getElementById('engine-version').innerText = YUM_ENGINE_VERSION.full;
+</script>
+
 
 <footer>
-  <p>&copy; 2025 Yum Project. <a href="https://github.com/wys-prog/yum">GitHub</a></p>
+  <p>&copy; 2025 Yum Studio | <a href="../../index.html">Home</a></p>
 </footer>
 
 </body>

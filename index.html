@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Yum - Lazy but Huge Success</title>
+<title>Yum - Lua & Godot Runtime</title>
 <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&family=Orbitron:wght@500;700&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="website/assets/style/yum.css">
 </head>
@@ -11,78 +11,60 @@
 
 <header>
   <h1>YUM</h1>
-  <p>Let's be lazy — but let's success too</p>
+  <p>Lazy but powerful — code without limits</p>
   <p class="tech">Powered by <span class="lua">Lua</span> + <span class="godot">Godot</span></p>
+  <p>Current Engine Version: <span id="engine-version">Loading...</span></p>
   <a href="#downloads" class="btn">Get Started</a>
 </header>
 
 <section id="overview">
   <h2>What is Yum?</h2>
   <p>
-    Yum is a modern, open-source project designed to make your workflow easier and more productive.
-    Whether you're a developer, student, or hobbyist, Yum aims to help you succeed with less effort.
+    YumEngine is a lightweight, cross-language runtime and engine that bridges C++ and C with Lua and Godot. 
+    Its goal is to provide an easy-to-integrate, extensible system for scripting, automation, and game development.
   </p>
 </section>
 
 <section id="about">
-  <h2>About Yum</h2>
-  <p>Yum is the ultimate project for lazy but ambitious coders. It combines elegance, speed, and anime-level epicness in one futuristic package.</p>
-  <p>Our goal is simple: make coding feel like an anime adventure, and create something huge without killing your vibe.</p>
-  <div>
-    <span class="badge">Lua</span>
-    <span class="badge">Godot</span>
-    <span class="badge">C++</span>
-    <span class="badge">C</span>
-    <span class="badge">C#</span>
-  </div>
+  <h2>About YumEngine</h2>
+  <p>
+    YumEngine combines a C++ backend with a C-safe API, giving you both high performance and flexibility.
+    It includes a custom Lua runtime called <b>Yum.InternalLua</b>, and a fully dynamic library interface.
+  </p>
+  <ul class="features">
+    <li><b>Dynamic Library (Yum)</b>: Provides core utilities accessible from C, C++, Lua, and C#.</li>
+    <li><b>YumEngine</b>: Complete engine with linked Yum library; includes API and internal classes.</li>
+    <li><b>YumiEngine</b>: Engine only, dependent on Yum library.</li>
+    <li><b>Variant & Vector</b>: Type-safe, C-compatible containers for data exchange between languages.</li>
+    <li><b>Cross-Language Callbacks</b>: Register functions from C#, Lua, or other languages.</li>
+  </ul>
 </section>
 
-<section id="how-it-works">
-  <h2>How Yum Works</h2>
-  <p>
-    <strong>Project Overview:</strong><br>
-    Yum is a cross-language runtime and binding layer designed to bridge C++ (and C) code with higher-level languages such as C# and Lua. It provides a flexible system for exposing C++ functionality to scripting environments, enabling rapid prototyping, extension, and integration in applications like game engines or automation tools.
-  </p>
-  <p>
-    <strong>Detailed Explanation:</strong><br>
-    The core of Yum consists of C++ libraries and C interfaces that expose various utilities (such as variant types, vectors, and callback registration) to other languages. The Yum runtime acts as a glue layer, allowing seamless communication between native code and managed or scripting environments.
-  </p>
-  <ul style="max-width:800px;margin:0 auto 20px;text-align:left;color:#ccc;">
-    <li>
-      <span class="badge">Variant Type System</span>
-      The <b>Variant</b> class provides a type-safe container for different data types (integers, floats, booleans, strings, etc.), making it easy to pass values between languages without manual type conversions.
-    </li>
-    <li>
-      <span class="badge">Vector Utilities</span>
-      <b>YcxxYum_Vec</b> and related functions offer dynamic array support, enabling efficient data exchange and manipulation from both C++ and scripting languages.
-    </li>
-    <li>
-      <span class="badge">Callback Registration</span>
-      Register C# (or other language) functions as callbacks, which can then be invoked from C++ code. Useful for event handling, scripting, and extending native functionality.
-    </li>
-    <li>
-      <span class="badge">Lua &amp; C# Bindings</span>
-      Includes C interfaces and dynamic libraries to facilitate integration with Lua and C# environments, such as Godot or custom engines.
-    </li>
-    <li>
-      <span class="badge">Godot Integration</span>
-      Extend Godot with custom native modules, providing high-performance features while retaining the flexibility of scripting.
-    </li>
+<section id="requirements">
+  <h2>Requirements</h2>
+  <ul>
+    <li>C++20 compiler (or higher, e.g., g++-15 for macOS)</li>
+    <li>C17 compatible compiler</li>
+    <li>Optional: Lua interpreter to run scripts</li>
   </ul>
+</section>
+
+<section id="compiling">
+  <h2>Compiling YumEngine</h2>
   <p>
-    Overall, Yum simplifies the process of exposing C++ code to other languages, making it easier to build modular, extensible, and high-performance applications.
+    Official builds are precompiled, so you usually don't need to compile anything manually. 
+    If you want custom builds:
   </p>
+  <pre>
+lua build.lua build
+  </pre>
+  <p>Make sure to adjust compiler paths, flags, or studio name if needed.</p>
 </section>
 
 <section id="downloads">
   <h2>Downloads</h2>
-  <p>Latest version ready for you. Click below and get your Yum experience.</p>
-  <a href="website/pages/download.html" class="btn">Download</a>
-</section>
-
-<section id="news">
-  <h2>News</h2>
-  <p>No news yet, but stay tuned. Big things are coming. Epic things. We promise.</p>
+  <p>Get the latest official builds:</p>
+  <a href="website/pages/download.html" class="btn">Download Yum</a>
 </section>
 
 <section id="devs">
@@ -91,15 +73,20 @@
     <div class="dev-card">
       <img src="website/assets/devs/bacf0edf1db0b954590709929ad5807b.jpg" alt="Wys">
       <h3>Wys</h3>
-      <p>Leader</p>
+      <p>Lead Developer</p>
       <a href="https://github.com/wys-prog" target="_blank">GitHub</a>
     </div>
   </div>
 </section>
 
 <footer>
-  <p>&copy; 2025 Yum Project. <a href="https://github.com/wys-prog/yum">GitHub</a></p>
+  <p>&copy; 2025 Yum Studio — <a href="https://github.com/wys-prog/yum">GitHub</a></p>
 </footer>
 
 </body>
+<script src="website/assets/version/engine_version.js"></script>
+<script>
+  document.getElementById('engine-version').innerText = YUM_ENGINE_VERSION.full;
+</script>
+
 </html>
