@@ -130,6 +130,9 @@ function build_project(major, minor, patch)
 
   print("> Linking")
   run(CXX .. " -o " .. OUT .. " *.o " .. table.concat(LINK_FLAGS, " "))
+  
+  print("> Linking Engine.")
+  run(CXX .. " -o " .. YUM_OUT .. " *.o " .. table.concat(ENG_FLAGS))
 
   print(string.format("Compiled: %s.%s.%s.%d.%d.%d",
     VERSION_STUDIO, VERSION_BRANCH, OUT, major, minor, patch))

@@ -12,7 +12,9 @@ namespace Yumcxx {
     lua_State *state;
   
   public:
-    inline LuaCxx() : state(luaL_newstate()) {}
+    inline LuaCxx(bool libs = false) : state(luaL_newstate()) {
+      if (libs) luaL_openlibs(state);
+    }
 
     inline lua_State *get() { return state; }
 

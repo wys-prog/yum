@@ -41,7 +41,7 @@ namespace Yumcxx {
     Subsystem();
     ~Subsystem();
 
-    uint64_t newState();
+    uint64_t newState(bool = false);
     void deleteState(uint64_t);
     bool isValidUID(uint64_t);
     std::shared_ptr<LuaSubsystem> get(uint64_t);

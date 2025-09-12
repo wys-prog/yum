@@ -89,10 +89,10 @@ namespace Yumcxx {
 
   Subsystem::~Subsystem() {}
 
-  uint64_t Subsystem::newState() {
+  uint64_t Subsystem::newState(bool lstdlibs) {
     uint64_t uid = uid_new();
 
-    luaSubsystems[uid] = std::make_shared<LuaSubsystem>(std::make_shared<LuaCxx>());
+    luaSubsystems[uid] = std::make_shared<LuaSubsystem>(std::make_shared<LuaCxx>(lstdlibs));
 
     return uid;
   }
@@ -127,8 +127,8 @@ extern "C" {
     delete (s);
   }
 
-  YUM_OUTATR uint64_t YumSubsystem_newState(YumSubsystem *s) {
-    return (s)->newState();
+  YUM_OUTATR uint64_t YumSubsystem_newState(YumSubsystem *s, int lstdlibs) {
+    return (s)->newState((lstdlibs == 0));
   }
 
   YUM_OUTATR void YumSubsystem_deleteState(YumSubsystem *s, uint64_t uid) {
